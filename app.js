@@ -2,7 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
-const http = require('http');
 
 process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
@@ -37,12 +36,6 @@ app.use((error, req, res, next) => {
 mongoose
     .connect(process.env.MONGO_URI)
     .then(() => {
-
-        app.listen(PORT, () => {
-            console.log(`Server running on port ${PORT}`);
-        });
+        app.listen(PORT);
     })
     .catch(err => console.log(err));
-
-
-
