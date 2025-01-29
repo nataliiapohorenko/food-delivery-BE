@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
+const restaurantRoutes = require('./routes/restaurantRoutes');
 
 process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
@@ -22,6 +23,8 @@ app.use(cors({
   
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use('/restaurants', restaurantRoutes);
 
 const PORT = process.env.PORT || 8080
 
