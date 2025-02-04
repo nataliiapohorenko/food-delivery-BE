@@ -24,7 +24,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/restaurants', restaurantRoutes);
+app.use('/', restaurantRoutes);
 
 const PORT = process.env.PORT || 8080
 
