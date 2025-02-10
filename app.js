@@ -16,10 +16,13 @@ process.on('uncaughtException', (error) => {
 
 const app = express();
 
+
 app.use(cors({
     origin: '*',
     methods: ['OPTIONS', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: true,
+    exposedHeaders: []
   }));
   
 app.use(express.json());
