@@ -1,6 +1,11 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 require('dotenv').config();
+const { OAuth2Client } = require('google-auth-library');
+
+const clientId = process.env.GOOGLE_CLIENT_ID;
+const client = new OAuth2Client(clientId);
 
 const User = require('../models/user');
 
@@ -63,3 +68,76 @@ exports.login = async (req, res, next) => {
         next(err);
     }
 }
+
+exports.authWithGoogle = async (req, res) => {
+    const { token } = req.body;
+    let newUser;
+    let userId;
+    try {
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: clientId
+        });
+
+        const payload = ticket.getPayload();
+
+        const user = await User.findOne({ email: payload.email })
+        if (!user) {
+            newUser = new User({
+                name: payload.name || payload.given_name + ' ' + payload.family_name || '',
+                email: payload.email,
+            });
+            await newUser.save();
+            userId = newUser._id;
+        } else {userId = user._id}
+
+        const authToken = jwt.sign(
+            { id: userId, email: payload.email, name: payload.name },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        res.json(authToken);
+
+    } catch (error) {
+        console.error('Invalid Google token:', error);
+        res.status(401).json({ message: 'Unauthorized' });
+    }
+}
+
+exports.authWithFacebook = async (req, res) => {
+const { token } = req.body;
+    try {
+        const fbUrl = `https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${token}`;
+        const response = await axios.get(fbUrl);
+        const payload = response.data;
+        let newUser;
+        let userId;
+
+        if (!payload || !payload.id) {
+            return res.status(401).json({ error: "Invalid Facebook token" });
+        }
+        const user = await User.findOne({ email: payload.email })
+        if (!user) {
+            newUser = new User({
+                name: payload.name || '',
+                email: payload.email,
+                picture: payload.picture?.data?.url,
+            });
+            await newUser.save();
+            userId = newUser._id;
+        } else { userId = user._id; }
+
+        const authToken = jwt.sign(
+            { id: userId, email: newUser.email, name: newUser.name },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        res.json(authToken);
+
+    } catch (error) {
+        console.error('Invalid Google token:', error);
+        res.status(401).json({ message: 'Unauthorized' });
+    }
+};
